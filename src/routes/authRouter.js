@@ -5,7 +5,7 @@ import validateSignUpSchema from '../middlewares/validations/validateSignUpSchem
 
 const router = Router()
 
-router.post('/sign-up', validateSignUpSchema, signUp)
-router.post('/sign-in', validateSignInSchema, signIn)
+router.post('/signup', validateSignUpSchema, signUp)
+router.post('/signin', validateSignInSchema, signIn)
 
 export default router
