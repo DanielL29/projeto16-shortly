@@ -18,4 +18,25 @@ async function createShortenUrl(req, res) {
     }
 }
 
-export { createShortenUrl }
+async function getShortenUrl(req, res) {
+    const { shortenId } = req.params
+
+    try {
+        const { rows: shorten } = await connection.query('SELECT id, "shortUrl", url FROM shortens WHERE id = $1', [shortenId])
+
+        if(shorten.length === 0) {
+            return res.sendStatus(404)
+        }
+
+        res.send(shorten[0])
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
+    }
+}
+
+async function accessShortenLink(req, res) {
+
+}
+
+export { createShortenUrl, getShortenUrl, accessShortenLink }
