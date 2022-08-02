@@ -80,4 +80,22 @@ async function deleteShortenUrl(req, res) {
     }
 }
 
-export { createShortenUrl, getShortenUrl, accessShortenLink, deleteShortenUrl }
+async function getRanking(req, res) {
+    try {
+        const { rows: ranking } = await connection.query(`
+            SELECT u.id, u.name, COUNT(s."userId")::INTEGER AS "linksCount", SUM(s."visitCount")::INTEGER AS "visitCount"
+            FROM users u
+            JOIN shortens s ON u.id = s."userId"
+            GROUP BY u.id
+            ORDER BY "visitCount" DESC
+            LIMIT 10
+        `)
+
+        res.send(ranking)
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
+    }
+}
+
+export { createShortenUrl, getShortenUrl, accessShortenLink, deleteShortenUrl, getRanking }
