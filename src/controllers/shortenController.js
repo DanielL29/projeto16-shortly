@@ -36,7 +36,22 @@ async function getShortenUrl(req, res) {
 }
 
 async function accessShortenLink(req, res) {
+    const { shortUrl } = req.params
+    
+    try {
+        const { rows: shorten } = await connection.query('SELECT url FROM shortens WHERE "shortUrl" = $1', [shortUrl])
+        
+        if(shorten.length === 0) {
+            return res.sendStatus(404)
+        }
 
+        await connection.query('UPDATE shortens SET "visitCount" = "visitCount" + 1 WHERE "shortUrl" = $1', [shortUrl])
+
+        res.redirect(shorten[0].url)
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
+    }
 }
 
 export { createShortenUrl, getShortenUrl, accessShortenLink }
