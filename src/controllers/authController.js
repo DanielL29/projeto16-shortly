@@ -34,4 +34,38 @@ async function signIn(req, res) {
     }
 }
 
-export { signUp, signIn }
+async function getUserShortens(req, res) {
+    const { user } = res.locals
+
+    try {
+        const { rowCount: userFounded } = await connection.query('SELECT * FROM users WHERE id = $1', [user.id])
+
+        if(userFounded === 0) {
+            return res.sendStatus(404)
+        }
+
+        const { rows: shortens } = await connection.query(`
+            SELECT u.id, u.name, SUM(s."visitCount")::INTEGER AS "visitCount", (
+                SELECT JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                        'id', s.id,
+                        'shortUrl', s."shortUrl",
+                        'url', s.url,
+                        'visitCount', s."visitCount"
+                    )
+                ) FROM shortens s WHERE s."userId" = u.id
+            ) as "shortenedUrls"
+            FROM users u, shortens s
+            WHERE s."userId" = u.id
+            AND u.id = $1
+            GROUP BY s."userId", u.id
+        `, [user.id])
+
+        res.send(shortens[0])
+    } catch (err) {
+        console.log(err)
+        res.status(500).send(err)
+    }
+}
+
+export { signUp, signIn, getUserShortens }
