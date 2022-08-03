@@ -30,9 +30,11 @@ async function deleteUserUrl(shortenId) {
 
 async function selectRanking() {
     return connection.query(`
-        SELECT u.id, u.name, COUNT(s."userId")::INTEGER AS "linksCount", SUM(s."visitCount")::INTEGER AS "visitCount"
+        SELECT u.id, u.name, 
+            COUNT(s."userId")::INTEGER AS "linksCount", 
+            COALESCE(SUM(s."visitCount")::INTEGER, 0) AS "visitCount"
         FROM users u
-        JOIN shortens s ON u.id = s."userId"
+        LEFT JOIN shortens s ON u.id = s."userId"
         GROUP BY u.id
         ORDER BY "visitCount" DESC
         LIMIT 10
