@@ -1,7 +1,7 @@
-import connection from '../database/db.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import dotenv from 'dotenv'
+import { insertUser, selectIfEmailExists, selectUserUrls } from '../repositories/authRepository.js'
 
 dotenv.config()
 
@@ -12,7 +12,7 @@ async function signUp(req, res) {
     try {
         const hashPassword = bcrypt.hashSync(user.password, 10)
 
-        await connection.query('INSERT INTO users (name, email, password) VALUES($1, $2, $3)', [user.name, user.email, hashPassword])
+        await insertUser(user.name, user.email, hashPassword)
 
         res.sendStatus(201)
     } catch (err) {
@@ -38,28 +38,13 @@ async function getUserShortens(req, res) {
     const { user } = res.locals
 
     try {
-        const { rowCount: userFounded } = await connection.query('SELECT * FROM users WHERE id = $1', [user.id])
+        const { rowCount: emailFounded } = await selectIfEmailExists(user.email)
 
-        if(userFounded === 0) {
-            return res.sendStatus(404)
+        if(emailFounded === 0) {
+            return res.status(404).send('user not found')
         }
 
-        const { rows: shortens } = await connection.query(`
-            SELECT u.id, u.name, SUM(s."visitCount")::INTEGER AS "visitCount", (
-                SELECT JSON_AGG(
-                    JSON_BUILD_OBJECT(
-                        'id', s.id,
-                        'shortUrl', s."shortUrl",
-                        'url', s.url,
-                        'visitCount', s."visitCount"
-                    )
-                ) FROM shortens s WHERE s."userId" = u.id
-            ) as "shortenedUrls"
-            FROM users u, shortens s
-            WHERE s."userId" = u.id
-            AND u.id = $1
-            GROUP BY s."userId", u.id
-        `, [user.id])
+        const { rows: shortens } = await selectUserUrls(user.id)    
 
         res.send(shortens[0])
     } catch (err) {

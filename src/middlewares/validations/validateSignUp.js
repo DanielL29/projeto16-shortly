@@ -1,7 +1,7 @@
-import connection from "../../database/db.js"
+import { selectIfEmailExists } from "../../repositories/authRepository.js"
 
 async function validateSignUp(req, res, next) {
-    const { rowCount: emailFounded } = await connection.query('SELECT * FROM users WHERE email = $1', [req.body.email])
+    const { rowCount: emailFounded } = await selectIfEmailExists(req.body.email)
 
     if(emailFounded > 0) {
         return res.sendStatus(409)

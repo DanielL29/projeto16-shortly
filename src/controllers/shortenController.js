@@ -1,5 +1,13 @@
 import { nanoid } from 'nanoid'
-import connection from '../database/db.js'
+import { 
+    deleteUserUrl,
+    insertShortenUrl, 
+    selectRanking, 
+    selectShortenUrl, 
+    selectUrlAndVerifyUser, 
+    selectUrlToAccess, 
+    updateVisitCount
+} from '../repositories/shortenRepository.js'
 
 async function createShortenUrl(req, res) {
     const { user } = res.locals
@@ -9,7 +17,7 @@ async function createShortenUrl(req, res) {
     try {
         shortUrl = nanoid(8)
 
-        await connection.query('INSERT INTO shortens ("shortUrl", url, "userId") VALUES($1, $2, $3)', [shortUrl, url, user.id])
+        await insertShortenUrl(shortUrl, url, user.id)
 
         res.sendStatus(201)
     } catch (err) {
@@ -22,7 +30,7 @@ async function getShortenUrl(req, res) {
     const { shortenId } = req.params
 
     try {
-        const { rows: shorten } = await connection.query('SELECT id, "shortUrl", url FROM shortens WHERE id = $1', [shortenId])
+        const { rows: shorten } = await selectShortenUrl(shortenId)
 
         if(shorten.length === 0) {
             return res.sendStatus(404)
@@ -39,13 +47,13 @@ async function accessShortenLink(req, res) {
     const { shortUrl } = req.params
     
     try {
-        const { rows: shorten } = await connection.query('SELECT url FROM shortens WHERE "shortUrl" = $1', [shortUrl])
+        const { rows: shorten } = await selectUrlToAccess(shortUrl)
         
         if(shorten.length === 0) {
             return res.sendStatus(404)
         }
 
-        await connection.query('UPDATE shortens SET "visitCount" = "visitCount" + 1 WHERE "shortUrl" = $1', [shortUrl])
+        await updateVisitCount(shortUrl)
 
         res.redirect(shorten[0].url)
     } catch (err) {
@@ -59,19 +67,19 @@ async function deleteShortenUrl(req, res) {
     const { user } = res.locals
 
     try {
-        const { rowCount: shortenFounded } = await connection.query('SELECT * FROM shortens WHERE id = $1', [shortenId])
+        const { rowCount: shortenFounded } = await selectShortenUrl(shortenId)
 
         if(shortenFounded === 0) {
             return res.sendStatus(404)
         }
 
-        const { rowCount: shortenBelong } = await connection.query('SELECT * FROM shortens WHERE "userId" = $1 AND id = $2', [user.id, shortenId])
+        const { rowCount: shortenBelong } = await selectUrlAndVerifyUser(user.id, shortenId)
 
         if(shortenBelong === 0) {
             return res.status(401).send('shorten url doesnt belongs to this user')
         }
 
-        await connection.query('DELETE FROM shortens WHERE id = $1', [shortenId])
+        await deleteUserUrl(shortenId)
 
         res.sendStatus(204)
     } catch (err) {
@@ -82,14 +90,7 @@ async function deleteShortenUrl(req, res) {
 
 async function getRanking(req, res) {
     try {
-        const { rows: ranking } = await connection.query(`
-            SELECT u.id, u.name, COUNT(s."userId")::INTEGER AS "linksCount", SUM(s."visitCount")::INTEGER AS "visitCount"
-            FROM users u
-            JOIN shortens s ON u.id = s."userId"
-            GROUP BY u.id
-            ORDER BY "visitCount" DESC
-            LIMIT 10
-        `)
+        const { rows: ranking } = await selectRanking()
 
         res.send(ranking)
     } catch (err) {
