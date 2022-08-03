@@ -1,14 +1,7 @@
 import connection from "../../database/db.js"
-import { signInSchema } from "../../schemas/authSchemas.js"
 import bcrypt from 'bcrypt'
 
-async function validateSignInSchema(req, res, next) {
-    const { error } = signInSchema.validate(req.body, { abortEarly: false })
-
-    if(error) {
-        return res.status(422).send(error)
-    }
-
+async function validateSignIn(req, res, next) {
     const { rows: userFounded } = await connection.query('SELECT * FROM users WHERE email = $1', [req.body.email])
     
     if(userFounded.length === 0) {
@@ -22,4 +15,4 @@ async function validateSignInSchema(req, res, next) {
     next()
 }
 
-export default validateSignInSchema
+export default validateSignIn
