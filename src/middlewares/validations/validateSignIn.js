@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt'
 import { selectIfEmailExists } from "../../repositories/authRepository.js"
 
 async function validateSignIn(req, res, next) {
-    const { rows: emailFounded } = selectIfEmailExists(req.body.email)
+    const { rows: emailFounded } = await selectIfEmailExists(req.body.email)
     
     if(emailFounded.length === 0) {
         return res.status(401).send('user not allowed / email invalid')
