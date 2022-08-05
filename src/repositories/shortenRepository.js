@@ -1,7 +1,7 @@
 import connection from '../database/db.js'
 
-async function selectIfUrlExists(url) {
-    return connection.query('SELECT * FROM shortens WHERE url = $1', [url])
+async function selectIfUrlExists(url, userId) {
+    return connection.query('SELECT * FROM shortens WHERE url = $1 AND "userId" = $2', [url, userId])
 }
 
 async function insertShortenUrl(shortUrl, url, userId) {
