@@ -55,7 +55,7 @@ async function accessShortenLink(req, res) {
 
         await updateVisitCount(shortUrl)
 
-        res.redirect(shorten[0].url)
+        res.redirect(200, shorten[0].url)
     } catch (err) {
         console.log(err)
         res.status(500).send(err)
