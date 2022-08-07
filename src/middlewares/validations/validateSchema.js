@@ -1,11 +1,15 @@
-function validateSchema(req, res, next, schema) {
-    const { error } = schema.validate(req.body, { abortEarly: false })
+import schemas from './../../schemas/schemas.js'
 
-    if(error) {
-        return res.status(422).send(error)
+function validateSchema(schema) {
+    return (req, res, next) => {
+        const { error } = schemas[schema].validate(req.body, { abortEarly: false })
+    
+        if(error) {
+            return res.status(422).send(error)
+        }
+    
+        next()
     }
-
-    next()
 }
 
 export default validateSchema

@@ -3,16 +3,10 @@ import { accessShortenLink, createShortenUrl, deleteShortenUrl, getRanking, getS
 import verifyToken from './../middlewares/verifyToken.js';
 import validateShortenUrl from './../middlewares/validations/validateShortenUrl.js';
 import validateSchema from '../middlewares/validations/validateSchema.js';
-import shortenUrlSchema from '../schemas/shortenUrlSchema.js'
 
 const router = Router()
 
-router.post('/urls/shorten', 
-    verifyToken, 
-    (req, res, next) => validateSchema(req, res, next, shortenUrlSchema), 
-    validateShortenUrl, 
-    createShortenUrl
-)
+router.post('/urls/shorten', verifyToken, validateSchema('shortenUrl'), validateShortenUrl, createShortenUrl)
 router.get('/urls/:shortenId', getShortenUrl)
 router.get('/urls/open/:shortUrl', accessShortenLink)
 router.delete('/urls/:shortenId', verifyToken, deleteShortenUrl)
