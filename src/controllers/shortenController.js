@@ -19,7 +19,7 @@ async function createShortenUrl(req, res) {
 
         await insertShortenUrl(shortUrl, url, user.id)
 
-        res.sendStatus(201)
+        res.status(201).send({ shortUrl })
     } catch (err) {
         console.log(err)
         res.status(500).send(err)

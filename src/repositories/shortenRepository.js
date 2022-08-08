@@ -36,7 +36,7 @@ async function selectRanking() {
         FROM users u
         LEFT JOIN shortens s ON u.id = s."userId"
         GROUP BY u.id
-        ORDER BY "visitCount" DESC
+        ORDER BY "visitCount" DESC, u.id 
         LIMIT 10
     `)
 }
