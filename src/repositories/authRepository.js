@@ -10,20 +10,22 @@ async function insertUser(name, email, password) {
 
 async function selectUserUrls(id) {
     return connection.query(`
-        SELECT u.id, u.name, SUM(s."visitCount")::INTEGER AS "visitCount", 
-            JSON_AGG(
-                JSON_BUILD_OBJECT(
-                    'id', s.id,
-                    'shortUrl', s."shortUrl",
-                    'url', s.url,
-                    'visitCount', s."visitCount"
-                )
-            ) as "shortenedUrls"
+        SELECT u.id, u.name, COALESCE(SUM(s."visitCount")::INTEGER, 0) AS "visitCount", 
+            COALESCE(
+                JSON_AGG(
+                    JSON_BUILD_OBJECT(
+                        'id', s.id,
+                        'shortUrl', s."shortUrl",
+                        'url', s.url,
+                        'visitCount', s."visitCount"
+                    ) ORDER BY s.id
+                ) 
+                FILTER (WHERE s.id IS NOT NULL), 
+            '[]') as "shortenedUrls"
         FROM users u
         LEFT JOIN shortens s ON s."userId" = u.id
-        WHERE s."userId" = u.id
-        AND u.id = $1
-        GROUP BY s."userId", u.id
+        WHERE u.id = $1
+        GROUP BY u.id
     `, [id])
 }
 
